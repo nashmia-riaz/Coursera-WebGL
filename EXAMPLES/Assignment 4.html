@@ -1,0 +1,342 @@
+<html>
+<body style="background-color: #686868;">
+<font face="verdana" size="3">
+
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="Assignment 4.js"></script>
+
+<link rel="stylesheet" href="../Common/jquery-ui-themes-1.10.4/themes/overcast/jquery-ui.css"></link>
+<link rel="stylesheet" href="../Common/jquery-ui-themes-1.10.4/themes/overcast/jquery.ui.theme.css"></link>
+<link rel="stylesheet" href="../Common/jquery-ui-themes-1.10.4/themes/overcast/jquery-ui.min.css"></link>
+
+<script type="text/javascript" src="../Common/jquery-2.1.4.min.js"></script>
+<script type="text/javascript" src="../Common/jquery-ui-1.11.4.custom/jquery-ui.js"></script>
+<script type="text/javascript" src="Common/jquery-ui-1.11.4.custom/jquery-ui.min.js"></script>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+attribute vec4 vPosition;
+attribute vec4 vNormal;
+varying vec3 N, L, L2, E;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec4 lightPosition, lightPosition2;
+uniform mat3 normalMatrix;
+varying float att1; varying float att2;
+
+
+float attenuation(vec3 pos, vec3 light) {
+      float d = distance( pos, light);
+      float k = 0.2;
+
+      return 1.0 / (k * d);
+    }
+
+void main()
+{
+    vec3 pos = (modelViewMatrix * vPosition).xyz;
+
+      // Light attenuation
+    att1 = attenuation( pos, lightPosition.xyz );
+    att2 = attenuation( pos, lightPosition2.xyz );
+    // check for directional light
+
+    if(lightPosition.w == 0.0) L = normalize(lightPosition.xyz);
+    else L = normalize( lightPosition.xyz - pos );
+    L2 = normalize(lightPosition2.xyz);
+
+    E =  -normalize(pos);
+    N = normalize( normalMatrix*vNormal.xyz);
+
+    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+uniform vec4 ambientProduct;
+uniform vec4 diffuseProduct;
+uniform vec4 specularProduct;
+uniform vec4 ambientProduct2;
+uniform vec4 diffuseProduct2;
+uniform vec4 specularProduct2;
+uniform float shininess;
+varying vec3 N, L, L2, E;
+varying float att1; varying float att2;
+void main()
+{
+    vec4 fColor;
+
+    vec3 H = normalize( L + E );
+    vec4 ambient = ambientProduct;
+
+
+    float Kd = max( dot(L, N), 0.0 );
+    vec4  diffuse = Kd*diffuseProduct;
+
+    float Ks = pow( max(dot(N, H), 0.0), shininess );
+    vec4  specular = Ks * specularProduct;
+
+    if( dot(L, N) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+
+    vec3 H2 = normalize( L2 + E );
+    vec4 ambient2 = ambientProduct2;
+
+    float Kd2 = max( dot(L2, N), 0.0 );
+    vec4  diffuse2 = Kd2*diffuseProduct2;
+
+    float Ks2 = pow( max(dot(N, H2), 0.0), shininess );
+    vec4  specular2 = Ks * specularProduct2;
+
+    if( dot(L2, N) < 0.0 ) specular2 = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 globalAmbient = vec4(0.1, 0.1, 0.1, 1.0);
+    fColor = globalAmbient + att1*(ambient + diffuse +specular) +att2*( ambient2+diffuse2 +specular);
+    fColor.a = 1.0;
+
+    gl_FragColor = fColor;
+}
+</script>
+
+
+
+  <script>
+  $(function() {
+    $( "input[type=submit], a, button" )
+      .button()
+      .click(function( event ) {
+        event.preventDefault();
+      });
+
+      $( "#slider" ).slider();
+
+  });
+
+  </script>
+
+<body>
+<canvas id="gl-canvas" width="700" height="700">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+<br>
+<div style =
+"height: 700px;
+width: 770px;
+position:absolute;
+top: 10px;
+left: 720px;
+background-color: grey;
+">
+</br>
+<button id = "Button0" style="position: relative; left:10px;">Increase R</button>
+<button id = "Button1" style="position: relative; left:10px;">Decrease R</button></br></br>
+<button id = "Button2" style="position: relative; left:10px;">Increase theta</button>
+<button id = "Button3" style="position: relative; left:10px;">Decrease theta</button></br></br>
+<button id = "Button4" style="position: relative; left:10px;">Increase phi</button>
+<button id = "Button5" style="position: relative; left:10px;">Decrease phi</button></br></br>
+<button id= "Cone" style="position: relative; left:10px;">Cone</button>
+<button id= "Cylinder" style="position: relative; left:10px;">Cylinder</button>
+<button id= "Sphere" style="position: relative; left:10px;">Sphere</button>
+<br/><br/>
+<button id= "Draw" style="position: relative; left:10px;">Draw Solid</button>
+<button id= "Clear" style="position: relative; left:10px;">Clear Space</button>
+<div style="position: relative; left:10px;">
+
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; " align="center">
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Radius<div id="radius" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div></h5>
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; left:170px; top:-60px;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Height<div id="height" style="width:130px; height:10px; position:relative;  left:10px;" align="center">
+</div>
+</h5>
+
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative;  top:-62px;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Translation x-axis<div id="Translation-x-axis" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative;  top:-62px;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Translation y-axis<div id="Translation-y-axis" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; top:-62px;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Translation z-axis<div id="Translation-z-axis" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; left:170px; top:-243px;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Rotation x-axis<div id="x-axis-rotation" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; left:170px; top:-243px;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Rotation y-axis<div id="y-axis-rotation" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; left:170px; top:-243px;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Rotation z-axis<div id="z-axis-rotation" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+<!-- </div> -->
+
+<div style="position: absolute; left:400px; top:-320px;">
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; l;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Light source 1
+</h5>
+
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Strength<div id="source1-strength" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; l;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Position</br>
+  X coordinate<div id="source1-position-x" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Y coordinate<div id="source1-position-y" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Z value<div id="source1-position-z" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; l;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Ambient
+</br>
+  X Value<div id="source1-ambient-x" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Y Value<div id="source1-ambient-y" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Z Value<div id="source1-ambient-z" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; l;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Diffuse
+  </br>
+  X Value<div id="source1-diffuse-x" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Y Value<div id="source1-diffuse-y" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Z Value<div id="source1-diffuse-z" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; l;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Specular
+  </br>
+  X Value<div id="source1-specular-x" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Y Value<div id="source1-specular-y" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Z Value<div id="source1-specular-z" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+<button id = "source1-motion" style="position: relative;">Toggle Motion</button>
+</div>
+
+
+<div style="position: absolute; left:580px; top:-320px;">
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; l;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Light source 1
+</h5>
+
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Strength<div id="source2-strength" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; l;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Position</br>
+  X coordinate<div id="source2-position-x" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Y coordinate<div id="source2-position-y" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Z value<div id="source2-position-z" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; l;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Ambient
+</br>
+  X Value<div id="source2-ambient-x" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Y Value<div id="source2-ambient-y" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Z Value<div id="source2-ambient-z" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; l;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Diffuse
+  </br>
+  X Value<div id="source2-diffuse-x" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Y Value<div id="source2-diffuse-y" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Z Value<div id="source2-diffuse-z" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5>
+
+
+<h5 class="ui-state-default ui-corner-all ui-helper-clearfix" style="padding:4px; width:150px; position:relative; l;" align="center"/>
+  <span style="float:left; margin:-2px 5px 0 0;" ></span>
+  Specular
+  </br>
+  X Value<div id="source2-specular-x" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Y Value<div id="source2-specular-y" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+  Z Value<div id="source2-specular-z" style="width:130px; height:10px; position:relative; left:10px;" align="center">
+</div>
+</h5><button id = "source2-motion" style="position: relative; ">Toggle Motion</button>
+
+</div>
+
+</div>
+
+
+</div>
+</body>
+</body>
+</font>
+</html>

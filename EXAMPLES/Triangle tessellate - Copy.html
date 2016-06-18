@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script id="vertex-shader" type="x-shader/x-vertex">
+attribute vec4 vPosition;
+attribute vec4 vColor;
+varying vec4 fColor;
+
+void
+main()
+{
+    gl_Position = vPosition;
+    fColor = vColor;
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+precision mediump float;
+
+varying vec4 fColor;
+void
+main()
+{
+    gl_FragColor = fColor;
+}
+</script>
+
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="Triangle tessellate - Copy.js"></script>
+</head>
+
+<body>
+<canvas id="gl-canvas" width="512" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<div>
+<label for="divisions">Divisions</label>
+<input id="division slider" type="range"
+ min="0" max="6" step="1" value="0" />
+<div id="divisions"></div>
+Theta   <input id="theta slider" type="range"
+ min="0" max="360" step="1" value="0" /><div id="theta"></div>
+
+<button id= "Triangle">Triangle</button>
+<button id= "Square">Square</button>
+<button id= "Pentagon">Pentagon</button>
+<button id= "Hexagon">Hexagon</button>
+</div>
+</body>
+</html>

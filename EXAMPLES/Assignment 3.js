@@ -242,7 +242,7 @@ function redrawShape(i)
             points[i]=translationZ(points[i], centre, [0,0,0]);
             points[i]=rotationX(points[i]);
             points[i]=rotationY(points[i]);
-            points[i]=rotationZ(points[i]);    alert(points[i]);
+            points[i]=rotationZ(points[i]); 
             points[i]=translationX(points[i], [-centre[0],-centre[1],-centre[2]], [0,0,0]);
             points[i]=translationY(points[i], [-centre[0],-centre[1],-centre[2]], [0,0,0]);
             points[i]=translationZ(points[i], [-centre[0],-centre[1],-centre[2]], [0,0,0]);
